@@ -1,5 +1,6 @@
 import logging
 import os
+import numpy as np
 import torch
 from tensorboardX import SummaryWriter
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -181,6 +182,8 @@ class UNet3DTrainer:
     def _forward_pass(self, input, target):
         # forward pass
         output = self.model(input)
+
+        # print(output.detach().numpy().shape)
 
         # compute the loss
         loss = self.loss_criterion(output, target)

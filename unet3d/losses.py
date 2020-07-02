@@ -1,3 +1,5 @@
+import h5py
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn as nn
@@ -7,6 +9,13 @@ from torch.nn import MSELoss, SmoothL1Loss, L1Loss
 from embeddings.contrastive_loss import ContrastiveLoss
 from unet3d.utils import expand_as_one_hot
 
+def load_avg_gt(path):
+    with h5py.File(path, 'r') as input_file:
+        avg_gt = input_file['avg_gt'][()]
+        
+    avg_gt = np.array(avg_gt)
+    avg_gt = avg_gt.reshape(1, 1, 16, 256, 256)
+    return torch.tensor(avg_gt)
 
 def compute_per_channel_dice(input, target, epsilon=1e-5, ignore_index=None, weight=None):
     # assumes that input is a normalized probability
@@ -71,8 +80,10 @@ class DiceLoss(nn.Module):
 
         per_channel_dice = compute_per_channel_dice(input, target, epsilon=self.epsilon, ignore_index=self.ignore_index,
                                                     weight=weight)
+        per_channel_dice_avg_gt = compute_per_channel_dice(input, load_avg_gt('/home/stonebegin/Workspace/deep_learning/promise-3dunet/data/avg_gt.h5'), epsilon=self.epsilon, ignore_index=self.ignore_index,
+                                                    weight=weight)
         # Average the Dice score across all channels/classes
-        return torch.mean(1. - per_channel_dice)
+        return torch.mean(1. - per_channel_dice) + torch.mean(1. - per_channel_dice_avg_gt)
 
 
 class GeneralizedDiceLoss(nn.Module):
@@ -282,7 +293,7 @@ def flatten(tensor):
     """
     C = tensor.size(1)
     # new axis order
-    axis_order = (1, 0) + tuple(range(2, tensor.dim()))
+    axis_order = (1, 0) + tuple(range(2, tensor.dim()))  # If dim=5, axis_order = (1, 0, 2, 3, 4)
     # Transpose: (N, C, D, H, W) -> (C, N, D, H, W)
     transposed = tensor.permute(axis_order)
     # Flatten: (C, N, D, H, W) -> (C, N * D * H * W)

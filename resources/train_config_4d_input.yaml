@@ -13,7 +13,7 @@ model:
   # feature maps scale factor
   f_maps: 24
   # number of groups in the groupnorm
-  num_groups: 8
+  num_groups: 6
   # apply element-wise nn.Sigmoid after the final 1x1 convolution, otherwise apply nn.Softmax
   final_sigmoid: True
 # trainer configuration
@@ -23,11 +23,11 @@ trainer:
   # path to latest checkpoint; if provided the training will be resumed from that checkpoint
   resume: null
   # how many iterations between validations
-  validate_after_iters: 100
+  validate_after_iters: 55
   # how many iterations between tensorboard logging
-  log_after_iters: 100
+  log_after_iters: 55
   # max number of epochs
-  epochs: 60
+  epochs: 50
   # max number of iterations
   iters: 100000
   # model with higher eval score is considered better
